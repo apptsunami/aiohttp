@@ -973,7 +973,7 @@ Response object
 
    .. attribute:: charset
 
-      Read-only property that specifies the *encoding* for the request's BODY.
+   Read-only property that specifies the *encoding* for the request's BODY.
 
       The value is parsed from the *Content-Type* HTTP header.
 
@@ -1059,6 +1059,11 @@ Response object
 
       :return: *BODY* as *JSON* data parsed by *loads* parameter or
                ``None`` if *BODY* is empty or contains white-spaces only.
+
+    .. attribute:: request_info
+
+       A namedtuple with request URL and headers from :class:`ClientRequest`
+       object.
 
 
 ClientWebSocketResponse
@@ -1325,7 +1330,10 @@ Hierarchy of exceptions:
 
 * `ClientError` - Base class for all client specific exceptions
 
- - `ClientResponseError` - exceptions that could happen after we get response from server
+ - `ClientResponseError` - exceptions that could happen after we get response from server.
+
+   .. attribute:: request_info
+                  Instance of `RequestInfo` object, contains information about request.
 
   * `WSServerHandshakeError` - web socket server response error
 
@@ -1342,6 +1350,9 @@ Hierarchy of exceptions:
         - `ServerConnectionError` - server connection related errors
 
       * `ServerDisconnectedError` - server disconnected
+
+        .. attribute:: message
+           Partially parsed http message (optional)
 
       * `ServerTimeoutError` - server operation timeout, (read timeout, etc)
 

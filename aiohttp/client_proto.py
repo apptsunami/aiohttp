@@ -2,7 +2,7 @@ import asyncio
 import asyncio.streams
 
 from .client_exceptions import (ClientOSError, ClientPayloadError,
-                                ClientResponseError, ServerDisconnectedError)
+                                ServerDisconnectedError)
 from .http import HttpResponseParser, StreamWriter
 from .streams import EMPTY_PAYLOAD, DataQueue
 
@@ -68,8 +68,9 @@ class ResponseHandler(DataQueue, asyncio.streams.FlowControlMixin):
                 pass
 
         try:
-            self._parser.feed_eof()
+            uncompleted = self._parser.feed_eof()
         except Exception as e:
+            uncompleted = None
             if self._payload is not None:
                 self._payload.set_exception(
                     ClientPayloadError('Response payload is not completed'))
@@ -78,7 +79,7 @@ class ResponseHandler(DataQueue, asyncio.streams.FlowControlMixin):
             if isinstance(exc, OSError):
                 exc = ClientOSError(*exc.args)
             if exc is None:
-                exc = ServerDisconnectedError()
+                exc = ServerDisconnectedError(uncompleted)
             DataQueue.set_exception(self, exc)
 
         self.transport = self.writer = None
@@ -162,12 +163,9 @@ class ResponseHandler(DataQueue, asyncio.streams.FlowControlMixin):
                 try:
                     messages, upgraded, tail = self._parser.feed_data(data)
                 except BaseException as exc:
-                    import traceback
-                    traceback.print_exc()
                     self._should_close = True
-                    self.set_exception(
-                        ClientResponseError(code=400, message=str(exc)))
                     self.transport.close()
+                    self.set_exception(exc)
                     return
 
                 self._upgraded = upgraded
